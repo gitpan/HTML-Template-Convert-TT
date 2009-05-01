@@ -24,7 +24,7 @@ our @EXPORT = qw(
 	convert	
 );
 
-our $VERSION = '0.0201';
+our $VERSION = '0.0202';
 
 
 sub convert {

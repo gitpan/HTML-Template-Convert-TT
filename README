@@ -19,7 +19,8 @@ DEPENDENCIES
 
 This module requires these other modules and libraries:
 
-	none
+	HTML::Template
+	Template
 
 COPYRIGHT AND LICENCE
 

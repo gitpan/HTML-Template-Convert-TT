@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                HTML-Template-Convert-TT
-version:             0.0201
+version:             0.0202
 abstract:            ~
 license:             ~
 author:              
@@ -8,6 +8,8 @@ author:
 generated_by:        ExtUtils::MakeMaker version 6.42
 distribution_type:   module
 requires:     
+    HTML::Template:                2.9
+    Template:                      2
 meta-spec:
     url:     http://module-build.sourceforge.net/META-spec-v1.3.html
     version: 1.3
