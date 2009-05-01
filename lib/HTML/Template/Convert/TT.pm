@@ -24,7 +24,7 @@ our @EXPORT = qw(
 	convert	
 );
 
-our $VERSION = '0.02';
+our $VERSION = '0.0201';
 
 
 sub convert {
@@ -41,6 +41,7 @@ sub convert {
 	}
 	my @chunk = split /(?=<)/, $source;
 	close FH;
+	my $opts = shift;
 	my $text;
 	my ($tag, $test);
 	my @stack;
@@ -53,6 +54,8 @@ sub convert {
 		ELSE => 0,
 		UNLESS => 1
 	);
+	my %ctx_vars;
+	@ctx_vars{qw/__first__ __last__/} = qw/first() last()/;
 	for(@chunk) {
 		my ($name, $default, %escape);
 		if (/^<
@@ -179,7 +182,7 @@ __END__
 
 =head1 NAME
 
-HTML::Template::Convert::TT - Perl extension for blah blah blah
+HTML::Template::Convert::TT
 
 =head1 SYNOPSIS
 
@@ -194,22 +197,22 @@ HTML::Template::Convert::TT - Perl extension for blah blah blah
 
 Translate HTML::Template template into Template toolkit syntax
 
-Blah blah blah.
-
 =head2 EXPORT
 
-convert
+convert($text, \$options)
+convert('text', \$options)
 
 =head1 SEE ALSO
 
 Web site: http://code.google.com/p/html-template-convert/
+<br>
 SVN: 
 	 Non-members may check out a read-only working copy anonymously over HTTP.
 	 svn checkout http://html-template-convert.googlecode.com/svn/trunk/ html-template-convert-read-only
 
 =head1 AUTHOR
 
-A. D. Solovets, E<lt>asolovets@gmail.com<gt>
+A. D. Solovets, E<lt>asolovets@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 

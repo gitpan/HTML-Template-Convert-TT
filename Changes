@@ -6,4 +6,7 @@ Revision history for Perl extension HTML::Template::Convert::TT.
 
 0.02  Fri May 01 13:49:00 2009
 	- modified README
+0.0201  Fir May 01 15:35:00 2009
+	- modified README
+	- modified POD-documentation
 
