@@ -40,4 +40,5 @@ templates/if.tmpl
 templates/long_loops.tmpl
 templates/included2.tmpl
 templates/simple-loop.tmpl
+templates/locale.tmpl
 META.yml                                 Module meta-data (added by MakeMaker)
