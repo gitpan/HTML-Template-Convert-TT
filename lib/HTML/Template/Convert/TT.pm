@@ -24,9 +24,19 @@ our @EXPORT = qw(
 	convert	
 );
 
-our $VERSION = '0.0203';
+our $VERSION = '0.03';
 
 
+sub parse_opts {
+    my $argsref = shift;
+    my $options = shift;
+    for (my $x = 0; $x < @{$argsref}; $x += 2) {
+      defined(${$argsref}[($x + 1)]) or croak(
+        "function called with odd number of option parameters - should be of the form option => value");
+      $options->{lc(${$argsref}[$x])} = ${$argsref}[($x + 1)]; 
+    }
+    return $options;
+}
 sub convert {
 	my $source;
 	my $fname = shift;
@@ -41,7 +51,12 @@ sub convert {
 	}
 	my @chunk = split /(?=<)/, $source;
 	close FH;
-	my $opts = shift;
+	my $opts = {};
+	%$opts = (
+               loop_context_vars => 0,
+			   generate_params => 0,
+              );
+	$opts = parse_opts([@_], $opts);
 	my $text;
 	my ($tag, $test);
 	my @stack;
@@ -55,7 +70,9 @@ sub convert {
 		UNLESS => 1
 	);
 	my %ctx_vars;
-	@ctx_vars{qw/__first__ __last__/} = qw/first() last()/;
+	@ctx_vars{qw/__first__ __last__ __counter__/} = qw/loop.first loop.last loop.count/;
+	$ctx_vars{__odd__} = 'loop.count mod 2';
+	$ctx_vars{__inner__} = '1 - (loop.first + loop.last - loop.first*loop.last)';
 	for(@chunk) {
 		my ($name, $default, %escape);
 		if (/^<
@@ -110,6 +127,7 @@ sub convert {
 						$name = $val;
 					}
 				}
+				$name = $ctx_vars{lc $name} if exists $ctx_vars{lc $name} and $opts->{loop_context_vars};
 				die "Invalid parameter syntax($1)". pos if /\G(.+)/g;
 				push @stack, $tag if $push{$tag};
 				#$name = "i$it.$name" if $it;
@@ -127,6 +145,7 @@ sub convert {
 						" | replace('\\n', '\\\\n')".
 						" | replace('\\r', '\\\\r')"
 						if exists $escape{js};
+						#$name = 'loop.count' if $opts->{loop_context_vars} and $name eq '__counter__';
 					$text .= "[% $name$filter %]"
 						if $name or
 							die "Empty 'NAME' parameter";

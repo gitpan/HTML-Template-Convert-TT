@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => '3';
+use Test::More tests => '5';
 use HTML::Template::Convert::TT 'convert';
 
 SKIP: {
@@ -32,7 +32,7 @@ SKIP: {
 			$tmpl->output;
 
 		$fname = 'counter.tmpl';
-		$text = convert $fname;
+		$text = convert($fname, loop_context_vars => 1);
 		$vars = 
 			{ 
 				foo => [ {a => 'a'}, {a => 'b'}, {a => 'c'} ],
@@ -44,11 +44,38 @@ SKIP: {
 		$tmpl->param($vars);
 		$tt_out = undef;
 		$tt->process(\$text, $vars, \$tt_out);
-		TODO: {
-				local $TODO = 'TemplateToolkit hasn not got vars like __first__';
-				is
-					$tt_out,
-					$tmpl->output;
-		}
+		is
+			$tt_out,
+			$tmpl->output;
+
+		$fname = 'context.tmpl';
+		$text = convert($fname, loop_context_vars => 1);
+		$vars = {
+			FRUIT => [
+				{ KIND => 'Apples' },
+				{ KIND => 'Oranges' },
+				{ KIND => 'Brains' },
+				{ KIND => 'Toes' },
+				{ KIND => 'Kiwi' }
+			],
+			PINGPONG => [ {}, {}, {}, {}, {}, {} ] 
+		};
+		$tmpl = HTML::Template->new(filename => $fname, loop_context_vars => 1);
+		$tmpl->param($vars);
+		$tt_out = undef;
+		$tt->process(\$text, $vars, \$tt_out);
+		is
+			$tt_out,
+			$tmpl->output;
+
+		$fname = 'loop-context.tmpl';
+		$text = convert($fname, loop_context_vars => 1);
+		$vars = {
+				TEST_LOOP => [ { NUM => 1 } ]
+		};
+		$tt_out = undef;
+		$tt->process(\$text, $vars, \$tt_out) or die $tt->error;
+		ok($tt_out =~ /1:FIRST::LAST:ODD/);
 		print $text;
+		print $tt_out;
 }

@@ -13,4 +13,8 @@ Revision history for Perl extension HTML::Template::Convert::TT.
 	- HTML::Template, Template deps
 0.0203  Sat May 02 14:30:00 2009
 	- locale.tmpl miss
+0.03	Sun May 03 22:17:00 2009
+	- optional parameters
+	- context variables
+	
 
