@@ -6,14 +6,6 @@ use warnings;
 require Exporter;
 
 our @ISA = qw(Exporter);
-
-# Items to export into callers namespace by default. Note: do not export
-# names by default without a very good reason. Use EXPORT_OK instead.
-# Do not simply export all your public functions/methods/constants.
-
-# This allows declaration	use HTML::Template::Convert::TT ':all';
-# If you do not need this, moving things directly into @EXPORT or @EXPORT_OK
-# will save memory.
 our %EXPORT_TAGS = ( 'all' => [ qw(
 	
 ) ] );
@@ -22,9 +14,10 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw(
 	convert	
+	print_params
 );
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 
 sub parse_opts {
@@ -60,7 +53,6 @@ sub convert {
 	my $text;
 	my ($tag, $test);
 	my @stack;
-	my $it = 0;
 	my %push= ( 
 		VAR => 0,
 		LOOP => 1,
@@ -73,6 +65,7 @@ sub convert {
 	@ctx_vars{qw/__first__ __last__ __counter__/} = qw/loop.first loop.last loop.count/;
 	$ctx_vars{__odd__} = 'loop.count mod 2';
 	$ctx_vars{__inner__} = '1 - (loop.first + loop.last - loop.first*loop.last)';
+	my $gen_params = {};
 	for(@chunk) {
 		my ($name, $default, %escape);
 		if (/^<
@@ -127,10 +120,11 @@ sub convert {
 						$name = $val;
 					}
 				}
+				my $case_name = $name;
+				#$name = lc $name;
 				$name = $ctx_vars{lc $name} if exists $ctx_vars{lc $name} and $opts->{loop_context_vars};
 				die "Invalid parameter syntax($1)". pos if /\G(.+)/g;
 				push @stack, $tag if $push{$tag};
-				#$name = "i$it.$name" if $it;
 				if ($tag eq 'VAR') {
 					$text .= "[% DEFAULT $name = '$default' %]"
 						if defined $default;
@@ -146,23 +140,25 @@ sub convert {
 						" | replace('\\r', '\\\\r')"
 						if exists $escape{js};
 						#$name = 'loop.count' if $opts->{loop_context_vars} and $name eq '__counter__';
-					$text .= "[% $name$filter %]"
-						if $name or
-							die "Empty 'NAME' parameter";
+					die "Empty 'NAME' parameter" if $name eq '';
+					$text .= "[% $name$filter %]";
+					$gen_params->{$name} = $name;
 				}
 				elsif ($tag eq 'LOOP') {
-					++$it;
 					$text .= "[% FOREACH $name %]" 
 						if $name or
 							die "Empty 'NAME' parameter";
+					 my $sub_params = { 'parent hash' => $gen_params, 'child name' => $name };
+					$gen_params = $sub_params;
 				}
 				elsif ($tag eq 'INCLUDE') {
-					$text .= convert($name)
+					$text .= convert($case_name, %$opts)
 						if $name or die "Empty 'NAME' parameter";
+						%$gen_params = (%$gen_params, %${$opts->{gen_params}}) if ref $opts->{gen_params};
 				}
 				elsif ($tag eq 'IF' or $tag eq 'UNLESS') {
-					$text .= "[% $tag $name %]" if $name or
-						die "Empty 'NAME' parameter";
+					die "Empty 'NAME' parameter" if $name eq '';
+					$text .= "[% $tag $name %]";
 				}
 				else { # ELSE TAG
 					die "ELSE tag without IF/UNLESS first"
@@ -180,8 +176,15 @@ sub convert {
 				unless @stack;
 			die "Unexpected /TMPL_$tag tag " 
 				unless $tag = pop @stack;
-			--$it if $tag eq 'LOOP';
 			$text .= "[% END %]$2";
+			if(uc $tag eq 'LOOP') {
+				my $sub_param = $gen_params;
+				$gen_params = $sub_param->{'parent hash'};
+				my $key = $$sub_param{'child name'};
+				delete $$sub_param{'parent hash'};
+				delete $$sub_param{'child name'};
+				$gen_params->{$key} = [ $sub_param ];
+			}
 		}
 		else {
 			die "Syntax error in TMPL_* tag" 
@@ -190,7 +193,27 @@ sub convert {
 		}
 	}
 
+	${$opts->{gen_params}} = $gen_params if ref $opts->{gen_params};
 	return $text;
+}
+
+sub print_params {
+		$\ = "\n";
+		my $hash = shift;
+		my $outline = shift;
+		$outline = '' unless defined $outline;
+
+		for(keys %$hash) {
+				my $val = $$hash{$_}; 
+				if(ref($val) eq 'ARRAY') {
+					print "$outline$_ =>";
+					print_params($_, $outline."\t") for(@$val);
+				}
+				else {
+					print "$outline'$_'";
+				}
+		}
+		undef $\ unless $outline;
 }
 
 # Preloaded methods go here.
@@ -201,7 +224,7 @@ __END__
 
 =head1 NAME
 
-HTML::Template::Convert::TT
+HTML::Template::Convert::TT	- translates HTML::Template syntax into Template Toolkit
 
 =head1 SYNOPSIS
 
@@ -224,7 +247,7 @@ convert('text', \$options)
 =head1 SEE ALSO
 
 Web site: http://code.google.com/p/html-template-convert/
-<br>
+
 SVN: 
 	 Non-members may check out a read-only working copy anonymously over HTTP.
 	 svn checkout http://html-template-convert.googlecode.com/svn/trunk/ html-template-convert-read-only

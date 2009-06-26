@@ -13,9 +13,20 @@ use HTML::Template::Convert::TT 'convert';
 sub test {
 	SKIP: {
 			eval { require HTML::Template; };
-			skip 'HTML::Template is not installed' if $@;
+			if($@){
+			   	skip 'HTML::Template is not installed';
+			}
+			else {
+				use HTML::Template;
+			}
+
 			eval { require Template; };
-			skip 'TemplateToolkit is not installed' if $@;
+			if($@){
+				skip 'TemplateToolkit is not installed';
+			}
+			else {
+				use Template;
+			}
 
 			use HTML::Template;
 			use Template;

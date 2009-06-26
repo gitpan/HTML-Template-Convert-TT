@@ -7,5 +7,6 @@ WriteMakefile(
     PREREQ_PM         => {'HTML::Template' => 2.9, 'Template' => 2.20}, # e.g., Module::Name => 1.1
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
       (
-       AUTHOR         => 'A. U. Thor <mbait@slackware.lan>') : ()),
+	   ABSTRACT		  => 'perl extension for converting HTML::Template templates into Template Toolkit',
+       AUTHOR         => 'A. D. Solovets <asolovets@gmail.com>') : ()),
 );
